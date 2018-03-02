@@ -1,1 +1,1 @@
-# Supervised-Learning-Comparing-Trainable-Classifiers.
+# Supervised Learning Comparing Trainable Classifiers.
