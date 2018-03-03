@@ -66,6 +66,7 @@ def main():
 		nearestNeighbor = findNearestNeighbor(k, trainingSet, trainingSet[0])
 		predicted_value.append(classify(nearestNeighbor))
 	print(str(check(testSet, predicted_value)))
+	print("x")
 
 if __name__ == "__main__":
 	main()
