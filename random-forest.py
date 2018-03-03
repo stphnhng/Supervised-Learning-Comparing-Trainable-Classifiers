@@ -162,7 +162,7 @@ def build_decision_tree(train, max_depth, min_size, n_features):
     split_tree(root, max_depth, min_size, n_features, 1) # split tree based on root.
     return root
 
-def predict(node, row):
+def class_predict(node, row):
     # predicts class based on the values from training decision tree
     if row[node['index']] < node['value']:
         if isinstance(node['left'], dict): 
@@ -175,7 +175,7 @@ def predict(node, row):
         else:
             return node['right']
 
-def subsample(dataset, ratio):
+def subsample_data(dataset, ratio):
     sample = list()
     n_sample = round(len(dataset) * ratio)
     # builds random sub sample of data where len(subsample) = len(dataset) * ratio
@@ -184,9 +184,9 @@ def subsample(dataset, ratio):
         sample.append(dataset[index])
     return sample
 
-def bagging_predict(trees, row):
+def predict_bagging_data(trees, row):
     # predict based on decision trees created in random forest alg and test data.
-    predictions = [predict(tree, row) for tree in trees]
+    predictions = [class_predict(tree, row) for tree in trees]
     return max(set(predictions), key=predictions.count)
 
 def random_forest_alg(train, test, max_depth, min_size, sample_size, n_trees, n_features):
@@ -194,12 +194,12 @@ def random_forest_alg(train, test, max_depth, min_size, sample_size, n_trees, n_
     trees = list()
     for i in range(n_trees):
         # number of trees
-        sample = subsample(train, sample_size)
+        sample = subsample_data(train, sample_size)
         tree = build_decision_tree(sample, max_depth, min_size, n_features) 
         # build a decision tree based on the sample size of (len(dataset) * ratio) where ratio = sample_size
         # sample data is from the training data
         trees.append(tree) # append decisions trees for each tree
-    predictions = [bagging_predict(trees, row) for row in test] 
+    predictions = [predict_bagging_data(trees, row) for row in test] 
     # bagging - create multiple different trees of training data set with different samples
     # then return predictions for each different bagged tree
     return predictions
