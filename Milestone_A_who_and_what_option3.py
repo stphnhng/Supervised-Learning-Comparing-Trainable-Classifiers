@@ -70,34 +70,30 @@ Team:
 
 # Change the following to represent your own information:
 
-maggie = Partner("Smith", "Margaret", "maggiesmith99")
-john = Partner("Doe", "John", "jd007")
-team = [maggie, john]
+stephen = Partner("Hung", "Stephen", "hungs3")
+chris = Partner("Sofian", "Christopher", "cns24")
+team = [stephen, chris]
 
-OPTION = '1'
+OPTION = '3'
 # Legal options are 1, 2, and 3.
 
-title = "A Blustering Baroque Chess Player"
+title = "Comparison of Trainable Classifiers: K Nearest Neighbors vs. Random Forest"
 
-approach = '''Our approach will be to first understand the rules,
-then code our move generator, develop a static evaluation function,
-a personality for the agent, and then optimize using alpha-beta
-pruning, Zobrist hashing, and comparison of alternative static
-evaluation functions.'''
+approach = '''Our approach will be to first understand the algorithms we are implementing,
+then we will each implement the algorithms and help each other when needed. Afterwards,
+we will test our algorithms against each other based on two datasets.'''
 
-workload_distribution = '''Maggie will have primary responsibility for the 
-static evaluation function, John will have primary responsibility for
-the optimizations of alpha-beta pruning and Zobrist hashing, and both
-partners expect to be closely involved in writing the move-generation
-code and defining the personality of the agent.'''
+workload_distribution = '''Chris will have the primary responsibility of the K Nearest Neighbors Classifier
+and Stephen will have the primary responsibility of the Random Forest Classifier, then we will both come
+together and test our algorithms against each other. '''
 
-reference1 = '''Wikipedia article on Baroque Chess;
-    URL: https://en.wikipedia.org/wiki/Baroque_chess (accessed Feb. 22, 2018)'''
+reference1 = '''Sci-kit article on Random Forest,
+    URL: http://scikit-learn.org/stable/modules/ensemble.html '''
 
-reference2 = '''"What\'s Wrong with Ultima," by Robert Abbott,
-    available online at: http://www.logicmazes.com/games/wgr.html'''
+reference2 = '''"Sci-kit article on K-Nearest Neighbors,
+    URL: http://scikit-learn.org/stable/modules/neighbors.html '''
 
-our_submission = Who_and_what([maggie, john], OPTION, title, approach, workload_distribution, [reference1, reference2])
+our_submission = Who_and_what([stephen, chris], OPTION, title, approach, workload_distribution, [reference1, reference2])
 
 # You can run this file from the command line by typing:
 # python3 who_and_what.py
