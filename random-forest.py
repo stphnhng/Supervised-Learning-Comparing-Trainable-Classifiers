@@ -166,12 +166,12 @@ def class_predict(node, row):
     # predicts class based on the values from training decision tree
     if row[node['index']] < node['value']:
         if isinstance(node['left'], dict): 
-            return predict(node['left'], row) # still dictionary, not values keep going
+            return class_predict(node['left'], row) # still dictionary, not values keep going
         else:
             return node['left'] # return class value
     else:
         if isinstance(node['right'], dict):
-            return predict(node['right'], row)
+            return class_predict(node['right'], row)
         else:
             return node['right']
 
