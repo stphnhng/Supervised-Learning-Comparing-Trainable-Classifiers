@@ -11,6 +11,7 @@ import csv
 import sys
 import random
 from math import sqrt
+import time
 
 STRING_TO_INT = {} # dictionary containing the string to integer values.
 
@@ -65,9 +66,11 @@ def random_sample(dataset, sample_size):
         p_i = fraction of items labeled with class i in data
         Gini Impurity = 1- sum(i = 1 to # of classes) p_i ^2
 '''
-def gini_impurity(group, classes):
+def gini_impurity(total_rows, group, classes):
     num_classes = len(classes)
     impurity_score = 0
+    if len(group) == 0:
+        return 0.0
     for i in classes:
         class_i_count = 0
         for row in group:
@@ -76,9 +79,36 @@ def gini_impurity(group, classes):
         # fraction of items with class i
         p_i = class_i_count * 1.0 / len(group) 
         impurity_score += (p_i)*(p_i)
-    return 1 - impurity_score
+    # 1 - impurity_score is the result
+    # multiply by len(group) / total_rows in order to weight each impurity score based
+    # on the size of the given group. (prevent biases)
+    return (1 - impurity_score) * (1.0 * len(group) / total_rows)
+
+'''
+    split's the entire training set into two groups,
+        one less than the given value and
+        one greater than and equal to the given value
+    the given value is each row's chosen indices (the randomly chosen predictors)
+'''
+def split_dataset_on_index(dataset, feature_index, value):
+    split1 = list()
+    split2 = list()
+    for row in dataset:
+        if row[feature_index] < value:
+            split1.append(row)
+        else:
+            split2.append(row)
+    return split1, split2
+
 
 def find_split_point(dataset, num_features):
+    # want to find minimum, so set to sys.maxsize as default
+    best_gini = sys.maxsize
+    best_feature_index = sys.maxsize
+    best_split_value = sys.maxsize
+    best_split_groups = None
+
+
     list_of_classes = set() # set because it disallows duplicates
     for row in dataset:
         list_of_classes.add(row[-1])
@@ -95,23 +125,117 @@ def find_split_point(dataset, num_features):
         if feature_index not in class_features:
             class_features.append(feature_index)
 
-    '''
-        find a split point?
-    '''
-
     # (3.) Construct a split by using predictors selected in Step 2
 
-    for feature_index in class_features:
-        for row in dataset:
+    # go through each row in dataset
+    for row in dataset:
+        # select the randomly chosen predictors and split dataset into two using the row's predictor 
+        # and find highest purity split
+        for feature_index in class_features:
+            # check every row's feature index and see if it is a good split point
+            split_value = row[feature_index]
+            # split dataset into two based on the split_value (< on left) and (>= on right)
+            split1, split2 = split_dataset_on_index(dataset, feature_index, split_value)
+            # total length of the dataset
+            total_rows = float(len(split1)) + float(len(split2))
+            # get the gini value of this split
+            split_gini_value = gini_impurity(total_rows, split1, list_of_classes) + gini_impurity(total_rows, split2, list_of_classes)
+
+            # find best possible (minimum) gini value - high purity thus less inequality among groups.
+            if split_gini_value < best_gini:
+                best_gini = split_gini_value
+                best_feature_index = feature_index
+                best_split_value = split_value
+                best_split_groups = (split1, split2)
+
+    # returns these values for use in actually splitting decision tree 
+    # does not return best_gini since this was only used to find the best split - we have already found so no need.
+    return {'feature_index': best_feature_index, 'split_value': best_split_value, 'split_groups': best_split_groups}
+
+'''
+    returns the class with the highest count in group.
+'''
+def terminal_node(group):
+    all_group_classes = [row[-1] for row in group]
+    return max(set(all_group_classes), key = all_group_classes.count)
+
+def split_tree(node, num_predictors):
+    left_node, right_node = node['split_groups']
+    del(node['split_groups'])
+
+    # If the nodes(groups) are empty, then set it to 
+    if not left_node or not right_node:
+        node['left'] = node['right'] = terminal_node(left_node + right_node)
+        return
+
+    if len(left_node) <= 1:
+        node['left'] = terminal_node(left_node)
+    else:
+        node['left'] = find_split_point(left_node, num_predictors)
+        split_tree(node['left'], num_predictors)
+
+    if len(right_node) <= 1:
+        node['right'] = terminal_node(right_node)
+    else:
+        node['right'] = find_split_point(right_node, num_predictors)
+        split_tree(node['right'], num_predictors)
 
 
-    
+'''
+    (4.) Repeat 2 & 3 until tree is large
+'''
+def construct_decision_tree(training_dataset, num_predictors):
+    # root is the start of the training dataset - i.e first split
+    root = find_split_point(training_dataset, num_predictors)
+    split_tree(root, num_predictors)
+    return root
+
+def tree_traversal(tree_node, row):
+    # if less than, then go down the left path
+    if( row[tree_node['feature_index']] < tree_node['split_value'] ):
+        # if it is a dictionary this means it is still not a leaf node - keep going
+        if isinstance(tree_node['left'], dict):
+            return tree_traversal(tree_node['left'], row)
+        else:
+            return tree_node['left']
+    else:
+        # is >= value, go down right path
+        if isinstance(tree_node['right'], dict):
+            return tree_traversal(tree_node['right'], row)
+        else:
+            return tree_node['right']
 
 
+def predict_outofbag(trees, dataset_row):
+    # predict a result for each decision tree
+    class_predictions = list()
+    for decision_tree in trees:
+        class_predictions.append(tree_traversal(decision_tree, dataset_row))
+    # returns class with highest count
+    '''
+        (7.) for each observation, count the number of trees that is classified in one category
 
+        (8.) assign each observation to a final category by a majority vote
+    '''
+    return max(set(class_predictions), key=class_predictions.count)
 
-
-
+'''
+    (6.) Repeat 1 - 5 a large amount of times
+'''
+def random_forest_alg(dataset, test_data, num_trees, train_sample_ratio, num_predictors):
+    class_predictions = list() # list of predictions for each test_data's row of data
+    tree_list = list() # list of trees
+    length_of_sample = round(train_sample_ratio * len(dataset))
+    for i in range(num_trees):
+        training_sample = random_sample(dataset, length_of_sample)
+        tree_root = construct_decision_tree(training_sample, num_predictors)
+        tree_list.append(tree_root)
+    # (5.) Drop the out-of-bag data down the tree - store class assigned to each observation
+    # Could have been done in previous for loop but that would result in O(n^2) complexity,
+    # this is better (O(n))
+    for row in test_data:
+        class_predictions.append(predict_outofbag(tree_list, row))
+    return class_predictions
 
 # n_samples = target values (class labels)
 # n_features = features of a class
@@ -123,15 +247,15 @@ def find_split_point(dataset, num_features):
 
     (3.) Construct a split by using predictors selected in Step 2
 
-    Repeat 2 & 3 until tree is large
+    (4.) Repeat 2 & 3 until tree is large
 
-    Drop the out-of-bag data down the tree - store class assigned to each observation
+    (5.) Drop the out-of-bag data down the tree - store class assigned to each observation
 
-    Repeat 1 - 5 a large amount of times
+    (6.) Repeat 1 - 5 a large amount of times
 
-    for each observation, count the number of trees that is classified in one category
+    (7.) for each observation, count the number of trees that is classified in one category
 
-    assign each observation to a final category by a majority vote
+    (8.) assign each observation to a final category by a majority vote
 '''
 
 
@@ -141,30 +265,58 @@ def main():
     dataset = convert_dataset_strings(dataset)
 
     # clean data set so there are no empty rows
-    dataset_length = len(dataset)
-    for index in range(dataset_length):
-        if not dataset[index]: # if empty, pop it
-            dataset.pop(index)
+    dataset.remove([])
 
     # (1.) get test data
     # Sample Size - Size of Test data to be used to identify accuracy of Classifier
     #             - Default is 50% of Total Dataset
-    length_of_sample = 0.5 * len(dataset)
-    random_sample(dataset, length_of_sample)    
+    length_of_sample = round(0.3 * len(dataset))
+    test_data = random_sample(dataset, length_of_sample)
 
-    # 3 Main Tuning Parameters
-    # Node Size - number of observations in terminal nodes of each tree of the forest
-    #           - can be very small
-    node_size = 1
+    # 2 Main Tuning Parameters
     # Number of Trees - Number of Decision Trees
     #                 - 500 is default
-    num_tree = 500
+    num_trees = 129
+    print('Enter the number of trees you would like to use:')
+    num_tree_input = input('(0 for default, an integer > 0 otherwise:   ')
+    if(num_tree_input != '0'):
+        num_trees = int(num_tree_input)
     # Number of Predictors Sampled - number of predictors sampled at each split
     #                              - Sampling 2 -5 each time is often adequate
+    #                              - sqrt is easiest.
     num_predictors = float(sqrt(len(dataset[0])-1))
+    bounds = len(dataset[0])-1
+    print('Enter the number of predictors you want sampled:')
+    num_predictors_input = input('(0 for default or an integer x such that, 0 < x < ' + str(bounds) + ' :   ')
+    if(num_tree_input != '0'):
+        num_predictors = int(num_predictors_input)
+
+    # Start Time for alg timing purposes
+    start = time.time()
+
+    # returns list of predictions with each element being the majority vote of all decision tree's prediction
+    # for a corresponding row in test_data
+    predictions = random_forest_alg(dataset, test_data, num_trees, 0.5, num_predictors)
+    
+    # End Time for alg timing purposes
+    end = time.time()
 
 
-    find_split_point(dataset, num_predictors)
+    # Compare actual values in test_data to predictions made by random forest
+    actual_values = [row[-1] for row in test_data]
+    correct_values = 0
+    for i in range(len(actual_values)):
+        if actual_values[i] == predictions[i]:
+            correct_values+=1
+    # compute algorithm efficiency
+    alg_acc = correct_values * 1.0 / len(actual_values) * 100.0
+    print('Random Forest Algorithm Efficiency:', end='\t')
+    print(alg_acc)
+    # time elapsed for random forest alg.
+    print('Algorithm Time Elapsed:', end='\t')
+    print(end-start)
+
+
 
 
 
