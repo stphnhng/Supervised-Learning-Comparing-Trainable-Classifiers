@@ -221,7 +221,7 @@ def main():
     best_split_point_values = get_split(dataset, num_feature_split)
 
 
-    n_folds = 5
+    n_folds = 2
     max_depth = 10
     min_size = 1
     sample_size = 1.0 # percentages of values in a sample dataset from actual data set
