@@ -59,14 +59,14 @@ def check(test, answer):
 	count = 0
 	for i in range(len(test)):
 		if(answer[i] == test[i][-1]):
-			#print(answer[i])
-			#	print(test[i][-1])
 			count = count + 1	
 	return float(count)/float(len(test)) * 100
 
 
 def main():
 	import os.path
+	import time
+	start = time.time()
 	trainingSet = []
 	testSet = []
 	#dataset = raw_input("Which edataset should the program use?")
@@ -75,9 +75,9 @@ def main():
 	#else:
 	data_set = int(input("Choose 1 for Iris dataset and 2 for Ecoli dataset "))
 	if(data_set == 1):
-		setTrainTestData('iris.data', 0.66, trainingSet, testSet)
+		setTrainTestData('iris.data', 0.70, trainingSet, testSet)
 	else:
-		setTrainTestData('ecoli.csv', 0.66, trainingSet, testSet)
+		setTrainTestData('ecoli.csv', 0.70, trainingSet, testSet)
 	input_k = input("Enter k ")
 	if(int(input_k) <= 0):
 		input_k = 3
@@ -86,7 +86,9 @@ def main():
 		nearestNeighbor = findNearestNeighbor(int(input_k), trainingSet, testSet[i])
 		predicted_value.append(classify(nearestNeighbor))
 		print('> predicted=' + repr(classify(nearestNeighbor)) + ', actual=' + repr(testSet[i][-1]))
-	print(str(check(testSet, predicted_value)))
+	print("Accuracy rate "+str(check(testSet, predicted_value)))
+	end = time.time()
+	print("This program runs in "+str(time.time() - start)+" seconds")
 
 
 if __name__ == "__main__":
