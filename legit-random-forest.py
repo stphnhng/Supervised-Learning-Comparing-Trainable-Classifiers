@@ -57,6 +57,8 @@ def random_sample(dataset, sample_size):
         sample.append(dataset[index])
     return sample
 
+
+
 '''
     Calculate the Gini Impurity for a set of items (group)
         i is in {1,2,.... # of classes}
@@ -82,16 +84,26 @@ def find_split_point(dataset, num_features):
         list_of_classes.add(row[-1])
     list_of_classes = list(list_of_classes) # make it a list to make life easier
 
-    # take random sample without replacement of the predictors
+    # (2.) take random sample without replacement of the predictors
 
     # length of row without class at the end
     length_of_row = len(dataset[0]) - 1
 
-    class_features = list()
+    class_features = list() # random list of class features of size num_features
     while(len(class_features) < num_features):
         feature_index = random.randrange(length_of_row)
         if feature_index not in class_features:
             class_features.append(feature_index)
+
+    '''
+        find a split point?
+    '''
+
+    # (3.) Construct a split by using predictors selected in Step 2
+
+    for feature_index in class_features:
+        for row in dataset:
+
 
     
 
@@ -105,11 +117,11 @@ def find_split_point(dataset, num_features):
 # n_features = features of a class
 
 '''
-    Take a random sample of size N with replacemenet from the data (bootstrap sample)
+    (1.) Take a random sample of size N with replacemenet from the data (bootstrap sample)
 
-    Take a random sample without replacement of the predictors
+    (2.) Take a random sample without replacement of the predictors
 
-    Construct a split by using predictors selected in Step 2
+    (3.) Construct a split by using predictors selected in Step 2
 
     Repeat 2 & 3 until tree is large
 
@@ -134,11 +146,25 @@ def main():
         if not dataset[index]: # if empty, pop it
             dataset.pop(index)
 
-    # get test data - random_sample(dataset, length of sample)
+    # (1.) get test data
+    # Sample Size - Size of Test data to be used to identify accuracy of Classifier
+    #             - Default is 50% of Total Dataset
+    length_of_sample = 0.5 * len(dataset)
+    random_sample(dataset, length_of_sample)    
 
-    # num of features recommended to be sqrt(total number of features)
-    num_features = float(sqrt(len(dataset[0])-1))
-    find_split_point(dataset, num_features)
+    # 3 Main Tuning Parameters
+    # Node Size - number of observations in terminal nodes of each tree of the forest
+    #           - can be very small
+    node_size = 1
+    # Number of Trees - Number of Decision Trees
+    #                 - 500 is default
+    num_tree = 500
+    # Number of Predictors Sampled - number of predictors sampled at each split
+    #                              - Sampling 2 -5 each time is often adequate
+    num_predictors = float(sqrt(len(dataset[0])-1))
+
+
+    find_split_point(dataset, num_predictors)
 
 
 
