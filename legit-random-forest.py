@@ -330,7 +330,7 @@ def random_forest_alg(dataset, test_data, num_trees, train_sample_ratio, num_pre
 '''
 
 def main():
-    filename = 'ecoli.csv'
+    filename = 'iris.data'
     print('Enter the data file you would like to use:')
     file_input = input('0 for default, a string otherwise:   ')
     if file_input != '0':
@@ -384,6 +384,10 @@ def main():
     actual_values = [row[-1] for row in test_data]
     correct_values = 0
     for i in range(len(actual_values)):
+        print('actual_values: ', end="\t")
+        print(actual_values[i], end="\t")
+        print('predicted values: ', end="\t")
+        print(predictions[i])
         if actual_values[i] == predictions[i]:
             correct_values+=1
     # compute algorithm efficiency
